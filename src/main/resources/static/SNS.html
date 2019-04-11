@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comments</title>
+    <script
+            src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+</head>
+<style>
+    header{
+        width: 600px;
+        height: 100px;
+        background-color: rosybrown;
+        left: 50%;
+        margin: 2px 500px;
+    }
+    #upload-content {
+        width: 400px;
+        margin: 20px 50px;
+    }
+    #left{
+        width: 600px;
+        height: 700px;
+        background-color: snow;
+        margin: 2px 500px;
+        left: 50%;
+    }
+</style>
+<body>
+<header>
+    <div style="margin:15px;">
+        <input type="file" id="upload-file">
+        <button onclick="uploadFile()">파일업로드</button>
+    </div>
+    <h3 style="margin-left: 30%;">DGSW SNS</h3>
+</header>
+
+<div id="left">
+    <input id="new-content" placeholder="새 글쓰기" id="upload-content">
+    <button onclick="addNewContent()">확인</button>
+    <div  style="display: flex; border-bottom: 1px solid silver;">
+    <div style="width: 150px;">글쓰기 1</div>
+        <div style="margin-left: 350px;">
+            <button onclick="editComment(this, ${comment.id})">수정</button>
+            <button onclick="removeComment(this, ${comment.id})">삭제</button>
+        </div>
+    </div>
+    <div  style="display: flex; border-bottom: 1px solid silver;">
+        <div style="width: 150px;">글쓰기 2</div>
+        <div style="margin-left: 350px;">
+            <button onclick="editComment(this, ${comment.id})">수정</button>
+            <button onclick="removeComment(this, ${comment.id})">삭제</button>
+        </div>
+    </div>
+    <div  style="display: flex; border-bottom: 1px solid silver;">
+        <div style="width: 150px;">글쓰기 3</div>
+        <div style="margin-left: 350px;">
+            <button onclick="editComment(this, ${comment.id})">수정</button>
+            <button onclick="removeComment(this, ${comment.id})">삭제</button>
+        </div>
+    </div>
+    <div  style="display: flex; border-bottom: 1px solid silver;">
+        <div style="width: 150px;">글쓰기 4</div>
+        <div style="margin-left: 350px;">
+            <button onclick="editComment(this, ${comment.id})">수정</button>
+            <button onclick="removeComment(this, ${comment.id})">삭제</button>
+        </div>
+    </div>
+    <div id="comments-list"></div>
+
+    <button onclick="openJoinDialog()">회원가입</button>
+    <button onclick="openLoginDialog()">로그인</button>
+</div>
+
+
+<style>
+    #login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000000aa;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .login-dialog {
+        text-align: center;
+        background-color: white;
+        position: relative;
+        width: 300px;
+    }
+
+    #Join-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000000aa;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+</style>
+
+<div id="container" style="display: none;">
+    <div id="login-container">
+        <div class="login-dialog">
+            <div style="margin: 30px 0 30px 0">로그인</div>
+            <div><input placeholder="사용자 아이디"></div>
+            <div><input placeholder="패스워드" type="password"></div>
+            <div style="margin: 30px 0">
+                <button>확인</button>
+                <button onclick="closeLoginDialog()">취소</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="containerJoin" style="display: none;">
+    <div id="Join-container">
+        <div class="login-dialog">
+            <div style="margin: 30px 0 30px 0">회원가입</div>
+            <div><input placeholder="사용자 아이디"></div>
+            <div><input placeholder="패스워드" type="password"></div>
+            <div style="margin: 30px 0">
+                <button>확인</button>
+                <button onclick="closeJoinDialog()">취소</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function openLoginDialog() {
+        $('#container').show(400);
+    }
+
+    function closeLoginDialog() {
+        $('#container').hide(1000);
+    }
+
+    function openJoinDialog() {
+        $('#containerJoin').show(400);
+    }
+
+    function closeJoinDialog() {
+        $('#containerJoin').hide(1000);
+    }
+
+    async function uploadFile() {
+        try {
+            let file = $('#upload-file')[0].files[0];
+            let formData = new FormData();
+            formData.append('srcFile', file);
+            let response = await $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8080/attachment',
+                data: formData,
+                processData: false,
+                contentType: false
+            });
+            console.log(JSON.stringify(response));
+        } catch (err) {
+            console.log(JSON.stringify(err));
+        }
+    }
+
+    async function addNewContent() {
+        try {
+            let newContent = {
+                userId: 1,
+                content: $('#new-content').val()
+            };
+            let response = await $.ajax({
+                type: 'post',
+                url: 'http://localhost:8080/comment',
+                contentType: 'application/json',
+                data: JSON.stringify(newContent)
+            });
+            addNewLine(response);
+        } catch (err) {
+            console.log(JSON.stringify(err));
+        }
+    }
+
+    function addNewLine(comment) {
+        $('#comments-list').append(`
+                    <div id="line${comment.id}" style="display: flex; border-bottom: 1px solid silver;">
+                        <div style="width: 150px;">${comment.username}</div>
+                        <div style="width: 350px;">${comment.content}</div>
+                        <div>
+                            <button onclick="editComment(this, ${comment.id})">수정</button>
+                            <button onclick="removeComment(this, ${comment.id})">삭제</button>
+                        </div>
+                    </div>
+                `);
+    }
+
+    let content = null;
+
+    async function editComment(button, id) {
+        if ($(button).text() === '수정') {
+            let line = $(`#line${id}`);
+            content = line.find('div:nth-child(2)').html();
+            let input = `<input value="${content}">`;
+            line.find('div:nth-child(2)').html(input);
+            $(button).text('확인');
+            $(button).next().text("취소");
+        } else {
+            //let response = await $.ajax( post url contentType )
+            //response :: CommentUsernameProtocol
+            //line.find('div:nth-child(2)').html(response.content);
+        }
+    }
+
+    async function removeComment(button, id) {
+        if ($(button).text() === '삭제') {
+            try {
+                let response = await $.ajax({type: 'DELETE', url: `http://localhost:8080/comment/${id}`});
+                if (response === true) $(`#line${id}`).remove();
+                else alert('삭제하지 못했습니다');
+            } catch (err) {
+                console.log(JSON.stringify(err));
+            }
+        } else {
+            $(button).text('삭제');
+            $(button).prev().text('수정');
+            $(`#line${id}`).find('div:nth-child(2)').html(content);
+        }
+    }
+
+
+    async function getCommentList() {
+        try {
+            let response = await $.get('http://localhost:8080/list');
+            for (let i = 0; i < response.length; i++) {
+                let comment = response[i];
+                addNewLine(comment);
+            }
+        } catch (err) {
+            console.log(JSON.stringify(err));
+        }
+    }
+
+    getCommentList();
+</script>
+</body>
+</html>

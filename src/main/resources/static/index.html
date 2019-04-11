@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comments</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+<div>
+    <div>
+        <label for="content-input">Content</label><textarea id="content-input" rows="10" cols="30"></textarea>
+        <button onclick="addComment()">OK</button>
+    </div>
+    <div>
+        <input type="file" id="upload-file">
+        <button onclick="uploadFile()">UPLOAD</button>
+    </div>
+    <div id="comment-list"></div>
+    <button onclick="openLoginDialog()">로그인</button>
+    <style>
+        #login-container{
+            display: none;
+            justify-content:center;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+            left: 0;
+            top: 0;
+        }
+        #login-dialog{
+            text-align:center;
+            background-color: white;
+            position: relative;
+            width: 300px;
+        }
+    </style>
+
+    <div id="container" style="display: none;">
+        <div id="login-container">
+            <div id="login-dialog">
+                <div style="margin: 30px 0 30px 0;">로그인</div>
+                <div><input placeholder="사용자 아이디"></div>
+                <div><input placeholder="패스워드" type="password"></div>
+                <div style="margin: 30px 0;">
+                    <button>확인</button>
+                    <button onclick="closeLoginDialog()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <label for="name-input">Name</label><input type="text" id="name-input"><br>
+        <label for="email-input">Email</label><input type="email" id="email-input">
+        <button onclick="addUser()">OK</button>
+    </div>
+    <div id="user-list">
+    </div>
+</div>
+<script>
+    function openLoginDialog(){
+        $('#login-container').show(400);
+    }
+
+    function closeLoginDialog(){
+        $('#login-container').hide(1000);
+    }
+
+    let commentView = $('#comment-list');
+    let userView = $('#user-list');
+    function addCommentView(comment) {
+        let html = `<div id="comment_${comment.id}" style="display: flex; border-bottom: 1px solid silver;">
+                        <div style="width: 150px;">${comment.userName}</div>
+                        <div style="width: 350px; overflow: auto;">${comment.content}</div>
+                        <div><button onclick="editComment(${JSON.stringify(comment).replace(/"/g, '\'')})">EDIT</button><button onclick="deleteComment(${comment.id})">DELETE</button></div>
+                        </div>`;
+        commentView.append(html);
+    }
+    function addUserView(user) {
+        let html = `<div id="user_${user.id}" style="display: flex; border-bottom: 1px solid silver;">
+                        <div style="width: 150px;">${user.name}</div>
+                        <div style="width: 350px; overflow: auto;">${user.email}</div>
+                        <div><button onclick="editUser(${JSON.stringify(user).replace(/"/g, '\'')})">EDIT</button><button onclick="deleteUser(${user.id})" style="margin-right: 8px;">DELETE</button></div>
+                        <div><input type="file" id="upload-profile"><button onclick="uploadProfile(${user.id})">UPLOAD</button></div>
+                        </div>`;
+        userView.append(html);
+    }
+    function editCommentView(comment) {
+        let item = $(`#comment_${comment.id}`);
+        item.find('div:nth-child(2)').html(comment.content);
+        item.find('div:nth-child(3)').html(`<button onclick="editComment(${JSON.stringify(comment).replace(/"/g, '\'')})">EDIT</button><button onclick="deleteComment(${comment.id})">DELETE</button>`);
+    }
+    function editUserView(user) {
+        let item = $(`#user_${user.id}`);
+        item.find('div:nth-child(1)').html(user.name);
+        item.find('div:nth-child(2)').html(user.email);
+        item.find('div:nth-child(3)').html(`<div><button onclick="editUser(${JSON.stringify(user).replace(/"/g, '\'')})">EDIT</button><button onclick="deleteUser(${user.id})" style="margin-right: 8px;">DELETE</button>`);
+    }
+    function deleteCommentView(id) {
+        $(`#comment_${id}`).remove();
+    }
+    function deleteUserView(id) {
+        $(`#user_${id}`).remove();
+    }
+    function getComments() {
+        commentView.html('');
+        $.ajax({
+            async: true,
+            url: '/comment',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (response) {
+                for (let i = 0; i < response.length; i++) {
+                    let comment = response[i];
+                    addCommentView(comment);
+                }
+            },
+            error: function (error) {
+                commentView.html(JSON.stringify(error));
+            }
+        });
+    }
+    function getUser() {
+        userView.html('');
+        $.ajax({
+            async: true,
+            url: '/user',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (response) {
+                for (let i = 0; i < response.length; i++) {
+                    let user = response[i];
+                    addUserView(user);
+                }
+            },
+            error: function (error) {
+                userView.html(JSON.stringify(error));
+            }
+        });
+    }
+    getComments();
+    getUser();
+    function addComment() {
+        let userId = 1;
+        let content = $('#content-input').val();
+        $.ajax({
+            async: true,
+            url: '/comment',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'userId': userId,
+                'content': content
+            }),
+            dataType: 'json',
+            success: function (response) {
+                addUserView(response);
+            }
+        });
+    }
+    function addUser() {
+        let name = $('#name-input').val();
+        let email = $('#email-input').val();
+        $.ajax({
+            async: true,
+            url: '/user',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'name': name,
+                'email': email
+            }),
+            dataType: 'json',
+            success: function (response) {
+                addUserView(response);
+            }
+        });
+    }
+    function editComment(comment) {
+        let editedContent = prompt('Edit', comment.content);
+        if (editedContent === null) return;
+        $.ajax({
+            async: true,
+            url: `/comment/${comment.id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'content': editedContent
+            }),
+            dataType: 'json',
+            success: function (response) {
+                editCommentView(response);
+            },
+            error: function (err) {
+                alert("FAIL");
+                console.log(err);
+            }
+        });
+    }
+    function editUser(user) {
+        let editedName = prompt('Edit Name', user.name);
+        let editedEmail = prompt('Edit Email', user.email);
+        if (editedName === null && editedEmail === null) return;
+        $.ajax({
+            async: true,
+            url: `/user/${user.id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'name': editedName,
+                'email': editedEmail
+            }),
+            dataType: 'json',
+            success: function (response) {
+                editUserView(response);
+            },
+            error: function (err) {
+                alert("FAIL");
+                console.log(err);
+            }
+        });
+    }
+    function deleteComment(id) {
+        if (!confirm("삭제하시겠습니까?")) return;
+        $.ajax({
+            async: true,
+            url: `/comment/${id}`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            success: function (response) {
+                console.log(response);
+                if (response) {
+                    deleteCommentView(id);
+                }
+            },
+            error: function (err) {
+                alert("실패");
+                console.log(err);
+            }
+        });
+    }
+    function deleteUser(id) {
+        if (!confirm("삭제하시겠습니까?")) return;
+        $.ajax({
+            async: true,
+            url: `/user/${id}`,
+            type: 'DELETE',
+            contentType: 'application/json',
+            success: function (response) {
+                console.log(response);
+                if (response) {
+                    deleteUserView(id);
+                }
+            },
+            error: function (err) {
+                alert("실패");
+                console.log(err);
+            }
+        });
+    }
+    async function uploadFile() {
+        let file = $('#upload-file')[0].files[0];
+        try {
+            let formData = new FormData();
+            formData.append('srcFile', file);
+            console.log(formData);
+            $.ajax({
+                type: 'POST',
+                url: '/attachment',
+                data: formData,
+                dataType: 'multipart/form-data',
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    console.log(response);
+                    alert('확인');
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert('실패');
+                }
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    async function uploadProfile(id) {
+        let item = $(`#user_${id}`);
+        let file = item.find('div:nth-child(4)').find('input:nth-child(1)')[0].files[0];
+        try {
+            let formData = new FormData();
+            formData.append('srcFile', file);
+            console.log(formData);
+            $.ajax({
+                type: 'POST',
+                url: `/attachment/user/${id}`,
+                data: formData,
+                dataType: 'multipart/form-data',
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    console.log(response);
+                    alert('확인');
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert('실패');
+                }
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+</script>
+</body>
+</html>
